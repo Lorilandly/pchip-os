@@ -1,0 +1,10 @@
+[build]
+target = "riscv64gc-unknown-none-elf"
+rustflags = ['-Clink-arg=-Tsrc/lds/pchip.lds', '-Ctarget-feature=-c']
+
+[target.riscv64gc-unknown-none-elf]
+runner = """qemu-system-riscv64 -M sifive_u,msel=11 -smp 4 -m 128M \
+            -display none -serial stdio \
+            -bios none \
+            -drive if=none,format=raw,file=hdd.dsk,id=foo \
+            """

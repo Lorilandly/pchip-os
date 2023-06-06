@@ -1,0 +1,16 @@
+[package]
+name = "pchip_os"
+version = "0.1.0"
+edition = "2021"
+authors = ["Lori Li <lihaoan1001@163.com>"]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[profile.dev]
+panic = "abort" # disable stack unwinding on panic
+
+[profile.release]
+panic = "abort" # disable stack unwinding on panic
+
+[dependencies]
+riscv = "0.10"
