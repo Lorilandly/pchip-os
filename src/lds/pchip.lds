@@ -9,10 +9,8 @@ MEMORY
   ROM (rx) : ORIGIN = 0xC0000000, LENGTH = 0x4000
 }
 
-
 PHDRS
 {
-  
   text PT_LOAD;
   rodata PT_LOAD;
   data PT_LOAD;
