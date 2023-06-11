@@ -9,11 +9,11 @@ _start:
   la  gp, _global_pointer
 .option pop
   // Set stack pointer
+  csrr t0, mhartid // get hartid (cpu id)
   slli  t0, t0, 12
   la    sp, _stack_end
   sub   sp, sp, t0
 
-  csrr t0, mhartid // get hartid (cpu id)
   bnez t0, 3f // if not hart 0, go here
   
   // interrupt goes here
