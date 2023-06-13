@@ -6,8 +6,8 @@ mod trap;
 pub mod virt_uart;
 
 use core::panic::PanicInfo;
-use riscv::asm::wfi;
 use riscv::asm::ebreak;
+use riscv::asm::wfi;
 
 #[no_mangle] // don't mangle the name of this function
 pub extern "C" fn main() -> ! {
@@ -15,13 +15,10 @@ pub extern "C" fn main() -> ! {
     // named `_start` by default
     println!("This is my operating system!");
 
-    unsafe{ 
-        ebreak();
-    }
-    let a = 0xffff_8000 as *mut u8;
-    unsafe{*a = b'b'};
-    
-    loop{
+    unsafe { ebreak() };
+
+    println!("Still running after the breakpoint!");
+    loop {
         unsafe { wfi() };
     }
 }
@@ -30,7 +27,7 @@ pub extern "C" fn main() -> ! {
 #[panic_handler]
 fn panic(info: &PanicInfo) -> ! {
     println!("{}", info);
-    loop{
+    loop {
         unsafe { wfi() };
     }
 }

@@ -3,7 +3,8 @@ ENTRY(_start)
 
 MEMORY
 {
-  ram  (wxa) : ORIGIN = 0x80000000, LENGTH = 128M
+    UART (wr)  : ORIGIN = 0x10000000, LENGTH = 0x100
+    RAM  (wxa) : ORIGIN = 0x80000000, LENGTH = 128M
 }
 
 PHDRS
@@ -20,7 +21,7 @@ SECTIONS
         PROVIDE(_text_start = .);
         *(.text.init) *(.text .text.*) 
         PROVIDE(_text_end = .);
-    } >ram AT>ram :text
+    } >RAM AT>RAM :text
 
     PROVIDE(_global_pointer = .);
 
@@ -28,26 +29,26 @@ SECTIONS
         PROVIDE(_rodata_start = .);
         *(.rodata .rodata.*)
         PROVIDE(_rodata_end = .);
-    } >ram AT>ram :rodata
+    } >RAM AT>RAM :rodata
     
     .data : {
         . = ALIGN(4096);
         PROVIDE(_data_start = .);
         *(.sdata .sdata.*) *(.data .data.*)
         PROVIDE(_data_end = .);
-    } >ram AT>ram :data
+    } >RAM AT>RAM :data
     PROVIDE(_data_lma = LOADADDR(.data));
     
     .bss : {
         PROVIDE(_bss_start = .);
         *(.sbss .sbss.*) *(.bss .bss.*)
         PROVIDE(_bss_end = .);
-    } >ram AT>ram :bss
+    } >RAM AT>RAM :bss
     
-    PROVIDE(_memory_start = ORIGIN(ram));
+    PROVIDE(_ram_start = ORIGIN(RAM));
     PROVIDE(_stack_start = _bss_end);
-    PROVIDE(_stack_end = _stack_start + 0x80000);
-    PROVIDE(_memory_end = ORIGIN(ram) + LENGTH(ram));
+    PROVIDE(_stack_end = _stack_start + 0x100000);
+    PROVIDE(_ram_end = _ram_start + LENGTH(RAM));
     PROVIDE(_heap_start = _stack_end);
-    PROVIDE(_heap_size = _memory_end - _heap_start);
+    PROVIDE(_heap_size = _ram_end - _heap_start);
 }
