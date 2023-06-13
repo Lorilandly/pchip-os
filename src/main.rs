@@ -2,27 +2,25 @@
 #![no_main] // disable all Rust-level entry points
 
 mod assembly;
+mod trap;
 pub mod virt_uart;
 
 use core::panic::PanicInfo;
 use riscv::asm::wfi;
+use riscv::asm::ebreak;
 
 #[no_mangle] // don't mangle the name of this function
 pub extern "C" fn main() -> ! {
     // this function is the entry point, since the linker looks for a function
     // named `_start` by default
     println!("This is my operating system!");
-	println!("I'm so awesome. If you start typing something, I'll show you what you typed!");
 
-    
-    loop{
-        unsafe { wfi() };
+    unsafe{ 
+        ebreak();
     }
-}
-
-#[no_mangle]
-pub extern "C" fn trap_handle() -> ! {
-    println!("trap");
+    let a = 0xffff_8000 as *mut u8;
+    unsafe{*a = b'b'};
+    
     loop{
         unsafe { wfi() };
     }
