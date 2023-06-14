@@ -11,8 +11,6 @@ use riscv::asm::wfi;
 
 #[no_mangle] // don't mangle the name of this function
 pub extern "C" fn main() -> ! {
-    // this function is the entry point, since the linker looks for a function
-    // named `_start` by default
     println!("This is my operating system!");
 
     unsafe { ebreak() };
