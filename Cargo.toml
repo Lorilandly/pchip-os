@@ -15,5 +15,4 @@ panic = "abort" # disable stack unwinding on panic
 [dependencies]
 riscv = "0.10"
 ns16550a = "0.2"
-lazy_static = { version = "1.4", features = ["spin_no_std"]}
 spin = "0.9"

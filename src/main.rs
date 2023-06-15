@@ -9,6 +9,7 @@ use core::panic::PanicInfo;
 use riscv::asm::ebreak;
 use riscv::asm::wfi;
 
+/// Entry point
 #[no_mangle] // don't mangle the name of this function
 pub extern "C" fn main() -> ! {
     println!("This is my operating system!");

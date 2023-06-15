@@ -2,6 +2,19 @@ use crate::println;
 use riscv::register::mcause::Exception;
 use riscv::register::*;
 
+/// Handles CPU trap
+/// 
+/// When cpu encounters a exception or interrupt, it jumps to the address 
+/// stored in the `mtvec` register, which is a function called trap_entry 
+/// written in assembly. That function will store all the volatile registers 
+/// and call this function. 
+/// 
+/// The arguments contains the values of the registers at the time the trap is triggered
+/// 
+/// Returns the address where the program should return to.
+/// 
+/// # Panics
+/// Panics for all exceptions except for breakpoint.
 #[no_mangle]
 pub extern "C" fn trap_handle(
     a0: usize,

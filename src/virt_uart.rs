@@ -1,9 +1,7 @@
 use ns16550a::*;
 use core::fmt;
-use spin::Mutex;
-use lazy_static::lazy_static;
+use spin::{Lazy, Mutex};
 
-/*
 pub static SERIAL: Lazy<Mutex<Uart>> = Lazy::new(|| {
     let uart = Uart::new(0x1000_0000);
     uart.init(
@@ -18,23 +16,6 @@ pub static SERIAL: Lazy<Mutex<Uart>> = Lazy::new(|| {
     );
     Mutex::new(uart)
 });
-*/
-lazy_static! {
-    pub static ref SERIAL: Mutex<Uart> = {
-        let uart = Uart::new(0x1000_0000);
-        uart.init(
-            WordLength::EIGHT,
-            StopBits::ONE,
-            ParityBit::DISABLE,
-            ParitySelect::EVEN,
-            StickParity::DISABLE,
-            Break::DISABLE,
-            DMAMode::MODE0,
-            Divisor::BAUD115200,
-        );
-        Mutex::new(uart)
-    };
-}
 
 #[macro_export]
 macro_rules! print {

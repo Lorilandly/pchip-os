@@ -31,8 +31,7 @@ SECTIONS
         PROVIDE(_rodata_end = .);
     } >RAM AT>RAM :rodata
     
-    .data : {
-        . = ALIGN(4096);
+    .data : ALIGN(4096) {
         PROVIDE(_data_start = .);
         *(.sdata .sdata.*) *(.data .data.*)
         PROVIDE(_data_end = .);
