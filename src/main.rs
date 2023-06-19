@@ -3,13 +3,13 @@
 
 mod assembly;
 mod trap;
-pub mod virt_uart;
+pub mod uart;
 
 use core::panic::PanicInfo;
 use riscv::asm::ebreak;
 use riscv::asm::wfi;
 
-use crate::virt_uart::SERIAL;
+use uart::SERIAL;
 
 /// Entry point
 #[no_mangle] // don't mangle the name of this function

@@ -17,23 +17,6 @@ pub static SERIAL: Lazy<Mutex<Uart>> = Lazy::new(|| {
     Mutex::new(uart)
 });
 
-#[macro_export]
-macro_rules! print {
-    ($($arg:tt)*) => {{
-        let _ = ($crate::virt_uart::_print(format_args!($($arg)*)));
-    }};
-}
-
-#[macro_export]
-macro_rules! println {
-    () => {
-        $crate::print!("\r\n")
-    };
-    ($($arg:tt)*) => {{
-        $crate::print!("{}\n", format_args!($($arg)*));
-    }};
-}
-
 #[doc(hidden)]
 pub fn _print(args: fmt::Arguments) {
     use core::fmt::Write;
