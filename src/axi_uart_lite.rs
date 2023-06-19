@@ -7,30 +7,34 @@ pub struct Uart {
 #[allow(dead_code)]
 impl Uart {
     pub fn new(address: usize) -> Self {
-        let base_address = address as * mut u8;
+        let base_address = address as *mut u8;
         Self { base_address }
     }
-    
-    pub fn putc(&self, c:u8) {
+
+    pub fn putc(&self, c: u8) {
         unsafe {
-            while self.stat_reg().read_volatile() & (1 << 27) != 0 {};
+            while self.stat_reg().read_volatile() & (1 << 27) != 0 {}
             self.tx().write_volatile(c);
         }
     }
-    
+
     pub fn puts(&self, s: &str) {
         for b in s.bytes() {
             self.putc(b);
         }
     }
-    
+
     pub fn put_hex(&self, hex: usize) {
         for idx in (0..16).rev() {
             let nibble: u8 = (hex >> (idx * 4)) as u8 & 0xf;
-            self.putc(if nibble < 0xa { b'0' + nibble } else { b'a' + nibble - 0xa });
+            self.putc(if nibble < 0xa {
+                b'0' + nibble
+            } else {
+                b'a' + nibble - 0xa
+            });
         }
     }
-    
+
     unsafe fn tx(&self) -> *mut u8 {
         self.base_address.add(0x04)
     }
@@ -42,7 +46,7 @@ impl Uart {
     unsafe fn stat_reg(&self) -> *mut u32 {
         self.base_address.add(0x08).cast::<u32>()
     }
-    
+
     unsafe fn ctrl_reg(&self) -> *mut u32 {
         self.base_address.add(0x0C).cast::<u32>()
     }

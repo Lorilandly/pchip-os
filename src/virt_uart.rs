@@ -1,5 +1,5 @@
-use ns16550a::*;
 use core::fmt;
+use ns16550a::*;
 use spin::{Lazy, Mutex};
 
 pub static SERIAL: Lazy<Mutex<Uart>> = Lazy::new(|| {

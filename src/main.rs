@@ -9,6 +9,8 @@ use core::panic::PanicInfo;
 use riscv::asm::ebreak;
 use riscv::asm::wfi;
 
+use crate::virt_uart::SERIAL;
+
 /// Entry point
 #[no_mangle] // don't mangle the name of this function
 pub extern "C" fn main() -> ! {
@@ -17,6 +19,27 @@ pub extern "C" fn main() -> ! {
     unsafe { ebreak() };
 
     println!("Still running after the breakpoint!");
+    loop {
+        let a = SERIAL.lock().get();
+        match a {
+            Some(c) => match c {
+                8 => {
+                    // This is a backspace, so we essentially have
+                    // to write a space and backup again:
+                    print!("{}{}{}", 8 as char, ' ', 8 as char);
+                }
+                10 | 13 => {
+                    // Newline or carriage-return
+                    println!();
+                }
+                _ => {
+                    print!("{}", c as char);
+                }
+            },
+            None => (),
+        }
+    }
+
     loop {
         unsafe { wfi() };
     }
