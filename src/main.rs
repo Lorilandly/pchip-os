@@ -1,20 +1,26 @@
 #![no_std] // don't link the Rust standard library
 #![no_main] // disable all Rust-level entry points
 
+extern crate alloc;
+
+mod allocator;
 mod assembly;
 mod trap;
 pub mod uart;
 
+use alloc::boxed::Box;
 use core::panic::PanicInfo;
 use riscv::asm::ebreak;
 use riscv::asm::wfi;
-
 use uart::SERIAL;
 
 /// Entry point
 #[no_mangle] // don't mangle the name of this function
 pub extern "C" fn main() -> ! {
     println!("This is my operating system!");
+
+    let x = Box::new(41);
+    println!("Boxed variable: {}", x);
 
     unsafe { ebreak() };
 
@@ -38,10 +44,6 @@ pub extern "C" fn main() -> ! {
             },
             None => (),
         }
-    }
-
-    loop {
-        unsafe { wfi() };
     }
 }
 
