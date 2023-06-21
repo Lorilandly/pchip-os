@@ -46,6 +46,7 @@ unsafe impl GlobalAlloc for BumpAllocator {
             })
             .is_err()
         {
+            // Retruning null pointer indicates an error
             return null_mut();
         };
         self.allocations.fetch_add(1, Ordering::SeqCst);

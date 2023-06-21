@@ -1,54 +1,60 @@
 use core::fmt;
+use spin::{Lazy, Mutex};
+
+pub static SERIAL: Lazy<Mutex<Uart>> = Lazy::new(|| Mutex::new(Uart::new(0x4060_0000)));
 
 pub struct Uart {
-    base_address: *mut u8,
+    base_address: usize,
 }
 
 #[allow(dead_code)]
 impl Uart {
-    pub fn new(address: usize) -> Self {
-        let base_address = address as *mut u8;
+    const RX: usize = 0x00;
+    const TX: usize = 0x04;
+    const STAT_REG: usize = 0x08;
+    const TX_FULL: u32 = 1 << 27;
+    const RX_EMPTY: u32 = 1 << 26;
+    const CTRL_REG: usize = 0x0C;
+
+    pub fn new(base_address: usize) -> Self {
         Self { base_address }
     }
 
-    pub fn putc(&self, c: u8) {
+    pub fn get(&self) -> Option<u8> {
+        let stat = (self.base_address + Self::STAT_REG) as *mut u32;
+        let rx = (self.base_address + Self::RX) as *mut u8;
         unsafe {
-            while self.stat_reg().read_volatile() & (1 << 27) != 0 {}
-            self.tx().write_volatile(c);
+            match stat.read_volatile() & Self::RX_EMPTY {
+                //0 => None,
+                _ => Some(rx.read_volatile()),
+            }
+        }
+    }
+
+    pub fn put(&self, c: u8) {
+        let stat = (self.base_address + Self::STAT_REG) as *mut u32;
+        let tx = (self.base_address + Self::TX) as *mut u8;
+        unsafe {
+            while stat.read_volatile() & Self::TX_FULL != 0 {}
+            tx.write_volatile(c);
         }
     }
 
     pub fn puts(&self, s: &str) {
         for b in s.bytes() {
-            self.putc(b);
+            self.put(b);
         }
     }
 
     pub fn put_hex(&self, hex: usize) {
         for idx in (0..16).rev() {
             let nibble: u8 = (hex >> (idx * 4)) as u8 & 0xf;
-            self.putc(if nibble < 0xa {
+            self.put(if nibble < 0xa {
                 b'0' + nibble
             } else {
                 b'a' + nibble - 0xa
             });
         }
-    }
-
-    unsafe fn tx(&self) -> *mut u8 {
-        self.base_address.add(0x04)
-    }
-
-    unsafe fn rx(&self) -> *mut u8 {
-        self.base_address
-    }
-
-    unsafe fn stat_reg(&self) -> *mut u32 {
-        self.base_address.add(0x08).cast::<u32>()
-    }
-
-    unsafe fn ctrl_reg(&self) -> *mut u32 {
-        self.base_address.add(0x0C).cast::<u32>()
     }
 }
 
@@ -57,23 +63,6 @@ impl fmt::Write for Uart {
         self.puts(s);
         Ok(())
     }
-}
-
-#[macro_export]
-macro_rules! print {
-    ($($arg:tt)*) => {{
-        let _ = ($crate::axi_uart_lite::_print(format_args!($($arg)*)));
-    }};
-}
-
-#[macro_export]
-macro_rules! println {
-    () => {
-        $crate::print!("\r\n")
-    };
-    ($($arg:tt)*) => {{
-        $crate::print!("{}\n", format_args!($($arg)*));
-    }};
 }
 
 #[doc(hidden)]

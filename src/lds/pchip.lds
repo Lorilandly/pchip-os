@@ -19,25 +19,22 @@ PHDRS
 
 SECTIONS
 {
-    .text : {
-        . = ALIGN(64);
+    .text : ALIGN(64) {
         PROVIDE(_text_start = .);
         *(.text.init)
         *(.text .text.*)
         PROVIDE(_text_end = .);
         . += 0x40; /* to create a gap between .text and .data b/c ifetch can fetch ahead from .data */
-    } >ROM    AT>ROM :text
+    } >ROM AT>ROM :text
 
     PROVIDE(_global_pointer = .);
 
-    .rodata : {
-        . = ALIGN(64);
+    .rodata : ALIGN(64) {
         PROVIDE(_rodata_start = .);
         *(.rodata .rodata.*)
     } >ROM AT>ROM :rodata
 
-    .srodata : {
-        . = ALIGN(64);
+    .srodata : ALIGN(64) {
         *(.srodata.cst16)
         *(.srodata.cst8)
         *(.srodata.cst4)
@@ -46,8 +43,7 @@ SECTIONS
         PROVIDE(_rodata_end = .);
     } >ROM AT>ROM :rodata
 
-    .data : {
-        . = ALIGN(64);
+    .data : ALIGN(64) {
         PROVIDE(_data_start = .);
         *(.data .data.*)
         *(.sdata .sdata.*)
@@ -57,8 +53,7 @@ SECTIONS
 
     PROVIDE(_data_lma = LOADADDR(.data));
 
-    .bss : {
-        . = ALIGN(64);
+    .bss : ALIGN(64) {
         PROVIDE(_bss_start = .);
         *(.sbss .sbss.*)
         *(.bss .bss.*)
@@ -67,9 +62,9 @@ SECTIONS
     } >RAM AT>RAM :bss
 
     PROVIDE(_ram_start = ORIGIN(RAM));
-    PROVIDE(_stack_start = _bss_end);
-    PROVIDE(_stack_end = _stack_start + 0x100000);
     PROVIDE(_ram_end = _ram_start + LENGTH(RAM));
-    PROVIDE(_heap_start = _stack_end);
-    PROVIDE(_heap_size = _ram_end - _heap_start);
+    PROVIDE(_stack_start = _ram_end - 0x10000000);
+    PROVIDE(_stack_end = _stack_start + 0x01000000);
+    PROVIDE(_heap_start = _bss_end);
+    PROVIDE(_heap_size = _stack_start - _heap_start);
 }
