@@ -1,3 +1,4 @@
+use super::Read;
 use core::fmt;
 use spin::{Lazy, Mutex};
 
@@ -13,7 +14,7 @@ impl Uart {
     const TX: usize = 0x04;
     const STAT_REG: usize = 0x08;
     const TX_FULL: u32 = 1 << 27;
-    const RX_EMPTY: u32 = 1 << 26;
+    const RX_VALID: u32 = 1 << 24;
     const CTRL_REG: usize = 0x0C;
 
     pub fn new(base_address: usize) -> Self {
@@ -24,7 +25,7 @@ impl Uart {
         let stat = (self.base_address + Self::STAT_REG) as *mut u32;
         let rx = (self.base_address + Self::RX) as *mut u8;
         unsafe {
-            match stat.read_volatile() & Self::RX_EMPTY {
+            match stat.read_volatile() & Self::RX_VALID {
                 //0 => None,
                 _ => Some(rx.read_volatile()),
             }
@@ -37,12 +38,6 @@ impl Uart {
         unsafe {
             while stat.read_volatile() & Self::TX_FULL != 0 {}
             tx.write_volatile(c);
-        }
-    }
-
-    pub fn puts(&self, s: &str) {
-        for b in s.bytes() {
-            self.put(b);
         }
     }
 
@@ -60,8 +55,16 @@ impl Uart {
 
 impl fmt::Write for Uart {
     fn write_str(&mut self, s: &str) -> fmt::Result {
-        self.puts(s);
+        for b in s.bytes() {
+            self.put(b);
+        }
         Ok(())
+    }
+}
+
+impl Read for Uart {
+    fn read(&self) -> Option<u8> {
+        self.get()
     }
 }
 

@@ -7,6 +7,7 @@ mod allocator;
 mod assembly;
 mod trap;
 pub mod uart;
+pub mod xmodem;
 
 use alloc::boxed::Box;
 use core::panic::PanicInfo;
@@ -25,9 +26,14 @@ pub extern "C" fn main() -> ! {
     unsafe { ebreak() };
 
     println!("Still running after the breakpoint!");
+
+    let mut modem = xmodem::Xmodem::new();
+    let file = modem.recv(&mut *SERIAL.lock());
+    println!("{:?}", file.unwrap());
+
     loop {
-        let a = SERIAL.lock().get();
-        match a {
+        let i = SERIAL.lock().get();
+        match i {
             Some(c) => match c {
                 8 => {
                     // This is a backspace, so we essentially have

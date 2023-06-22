@@ -4,7 +4,6 @@ rustflags = ['-Clink-arg=-Tsrc/lds/virt.lds', '-Ctarget-feature=-c']
 
 [target.riscv64gc-unknown-none-elf]
 runner = """qemu-system-riscv64 -M virt -smp 1 -m 128M \
-            -display none -serial stdio \
-            -bios none \
-            -kernel
+            -display none -serial pty \
+            -bios none -kernel
             """

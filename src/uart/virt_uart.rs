@@ -1,3 +1,4 @@
+use super::Read;
 use core::fmt;
 use ns16550a::*;
 use spin::{Lazy, Mutex};
@@ -16,6 +17,12 @@ pub static SERIAL: Lazy<Mutex<Uart>> = Lazy::new(|| {
     );
     Mutex::new(uart)
 });
+
+impl Read for Uart {
+    fn read(&self) -> Option<u8> {
+        self.get()
+    }
+}
 
 #[doc(hidden)]
 pub fn _print(args: fmt::Arguments) {

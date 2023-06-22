@@ -1,6 +1,11 @@
 mod virt_uart;
 pub use virt_uart::{_print, SERIAL};
 
+pub trait Read {
+    /// A simple wrapper
+    fn read(&self) -> Option<u8>;
+}
+
 #[macro_export]
 macro_rules! print {
     ($($arg:tt)*) => {{
