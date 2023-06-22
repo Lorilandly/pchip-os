@@ -41,7 +41,6 @@ unsafe impl GlobalAlloc for BumpAllocator {
                     return None;
                 }
                 next = inext + size;
-                inext = next;
                 Some(next)
             })
             .is_err()
