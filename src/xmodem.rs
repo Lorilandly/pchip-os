@@ -10,7 +10,6 @@ const EOT: u8 = 0x04;
 const ACK: u8 = 0x06;
 const NAK: u8 = 0x15;
 const CAN: u8 = 0x18;
-#[allow(dead_code)]
 const CPMEOF: u8 = 0x1A;
 const CRC: u8 = 0x43;
 
@@ -54,6 +53,22 @@ impl Xmodem {
         }
     }
 
+    // TODO:
+    // Subroutines
+    // The character-receive subroutine:
+    //      called with a parameter
+    //      specifying the number of seconds to wait. The receiver should first
+    //      call it with a time of 10, then <nak> and try again, 10 times.
+    //      
+    // 1st bit subroutine:
+    //      
+    // packet receive subroutine:
+    //      Arg: packet size
+    //      Ret: packet
+    //
+    // "PURGE" subroutine:
+    //      before calling <nak>
+    
     /// Receive an XMODEM transmission.
     ///
     /// `dev` should be the serial communication channel (e.g. the serial device).
@@ -118,10 +133,10 @@ impl Xmodem {
                     // if pnum = packet_num: ignore
                     // else: cancel transmission
                     let pnum = Self::read(dev)?; // specified packet number
-                    let pnum_1c = Self::read(dev)?; // same, 1's complemented
+                    let pnum255 = Self::read(dev)? + pnum; // 1's complemented `pnum`. Sum must equal to 255
                     let data: Box<[u8]> = (0..packet_size)
                         .map(|_| Self::read(dev))
-                        .collect::<Result<Box<_>, _>>()?;
+                        .collect::<Result<_, _>>()?;
 
                     let chk_crc = {
                         let recv_checksum =
@@ -132,17 +147,16 @@ impl Xmodem {
                     if packet_cnt == pnum {
                         // ignore packet if `pnum` is repeated
                         dev.write_char(ACK.into())?;
-                    } else if packet_cnt == pnum - 1 && chk_crc {
-                        // Accept packet if `pnum` is correct and crc check passed
-                        packet_cnt = packet_cnt.wrapping_add(1);
-                        dev.write_char(ACK.into())?;
-                        // outstream.write_all(&data)?;
-                        file.extend_from_slice(&data);
-                    } else if (255 - pnum) != pnum_1c {
+                    } else if pnum255 != 255 {
                         // Respond with `CAN` if `pnum` is wrong
                         dev.write_char(CAN.into())?;
                         dev.write_char(CAN.into())?;
                         return Err(Error::Canceled);
+                    } else if packet_cnt.wrapping_add(1) == pnum && chk_crc {
+                        // Accept packet if `pnum` is correct and crc check passed
+                        packet_cnt = packet_cnt.wrapping_add(1);
+                        dev.write_char(ACK.into())?;
+                        file.extend_from_slice(&data);
                     } else {
                         // Respond with `NAK` otherwise
                         dev.write_char(NAK.into())?;
@@ -150,8 +164,11 @@ impl Xmodem {
                     }
                 }
                 Ok(EOT) => {
-                    // End of file
+                    // End of file, truncate the filler characters
                     dev.write_char(ACK.into())?;
+                    if let Some(len) = file.iter().rposition(|x| *x != CPMEOF) {
+                        file.truncate(len + 1);
+                    }
                     break;
                 }
                 Ok(_) => {
@@ -179,11 +196,11 @@ impl Xmodem {
 
     /// Time out at around 3 seconds on qemu running on M1 Pro Mac
     fn read<R: uart::Read>(dev: &mut R) -> Result<u8, Error> {
-        for _ in 0..100 {
+        for _ in 0..1000000 {
             match dev.read() {
-                Some(CAN) => return Err(Error::Canceled),
+                //Some(CAN) => return Err(Error::Canceled),
                 Some(c) => return Ok(c),
-                None => unsafe { delay(1_0000_0000) },
+                None => unsafe { delay(1000) },
             }
         }
         Err(Error::Timeout)
