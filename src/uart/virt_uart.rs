@@ -19,7 +19,7 @@ pub static SERIAL: Lazy<Mutex<Uart>> = Lazy::new(|| {
 });
 
 impl Read for Uart {
-    fn read(&self) -> Option<u8> {
+    fn get(&self) -> Option<u8> {
         self.get()
     }
 }

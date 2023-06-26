@@ -63,7 +63,7 @@ impl fmt::Write for Uart {
 }
 
 impl Read for Uart {
-    fn read(&self) -> Option<u8> {
+    fn get(&self) -> Option<u8> {
         self.get()
     }
 }
