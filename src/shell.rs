@@ -50,9 +50,13 @@ impl Shell {
                         }
                     };
                     let cksum = cksum(&file);
-                    println!("File cksum: {}. Is this correct? [Y/n]\n", cksum);
-                    match readln(&mut *SERIAL.lock()).as_str() {
-                        "y" | "yes" | "Y" | "Yes" => self.file = Some(File { file, cksum }),
+                    println!("File cksum: {}. Is this correct? [Y/n]", cksum);
+                    let input = readln(&mut *SERIAL.lock());
+                    match input.as_str() {
+                        "" | "y" | "yes" | "Y" | "Yes" => {
+                            self.file = Some(File { file, cksum });
+                            println!("Ok");
+                        }
                         _ => println!("Aborted"),
                     }
                 }
@@ -112,7 +116,7 @@ fn readln<D: uart::Read + fmt::Write>(dev: &mut D) -> String {
                 dev.write_char('\n').unwrap();
                 break;
             }
-            Some(127) => {
+            Some(8 | 127) => {
                 // This is a backspace, so we essentially have
                 // to write a space and backup again:
                 if let Some(_) = buf.pop() {
