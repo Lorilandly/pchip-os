@@ -86,7 +86,7 @@ impl Xmodem {
                     break;
                 }
                 // TODO
-                //Err(Error::Timeout) => {}
+                //Err(uart::Error::Timeout) => {}
                 _ => {
                     initial_errors += 1;
                     if initial_errors > self.max_initial_errors {

@@ -2,6 +2,18 @@ use crate::println;
 use riscv::register::mcause::Exception;
 use riscv::register::*;
 
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct reg_frame {
+    a: [usize; 8],
+    t: [usize; 7],
+    ra: usize,
+    sp: usize,
+    gp: usize,
+    tp: usize,
+    s: [usize; 12],
+}
+
 /// Handles CPU trap
 ///
 /// When cpu encounters a exception or interrupt, it jumps to the address
@@ -16,25 +28,13 @@ use riscv::register::*;
 /// # Panics
 /// Panics for all exceptions except for breakpoint.
 #[no_mangle]
-pub extern "C" fn trap_handle(
-    a0: usize,
-    a1: usize,
-    a2: usize,
-    a3: usize,
-    a4: usize,
-    a5: usize,
-    a6: usize,
-    a7: usize,
-) -> usize {
-    println!(
-        "a0: {:#04x}\na1: {:#04x}\na2: {:#04x}\na3: {:#04x}\na4: {:#04x}\na5: {:#04x}\na6: {:#04x}\na7: {:#04x}",
-        a0, a1, a2, a3, a4, a5, a6, a7
-    );
+pub extern "C" fn trap_handle(frame: reg_frame) -> usize {
+    println!("{:x?}", frame);
     match mcause::read().cause() {
         mcause::Trap::Exception(cause) => match cause {
-            Exception::Breakpoint => println!("Breakpoint!\n{:#?}", ExceptionFrame::new()),
-            Exception::MachineEnvCall => println!("Syscall!\n{:#?}", ExceptionFrame::new()),
-            _ => panic!("Exception: {:?}\n{:#?}", cause, ExceptionFrame::new()),
+            Exception::Breakpoint => println!("Breakpoint!\n{:#x?}", ExceptionFrame::new()),
+            Exception::MachineEnvCall => println!("Syscall!\n{:#x?}", ExceptionFrame::new()),
+            _ => panic!("Exception: {:?}\n{:#x?}", cause, ExceptionFrame::new()),
         },
         mcause::Trap::Interrupt(cause) => println!("Interrput: {:?}", cause),
     }
