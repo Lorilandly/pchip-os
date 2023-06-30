@@ -11,7 +11,7 @@ _start:
   // Set stack pointer
   csrr t0, mhartid // get hartid (cpu id)
   slli  t0, t0, 12
-  la    sp, _stack_end
+  la    sp, _stack_start
   sub   sp, sp, t0
 
   bnez t0, 3f // if not hart 0, go here

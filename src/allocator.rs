@@ -10,8 +10,8 @@ extern "C" {
     static _heap_size: usize;
 }
 
-const HEAP_START: usize = 0x82000000;
-const HEAP_END: usize = 0x86ffffff;
+const HEAP_START: usize = 0x81000000;
+const HEAP_END: usize = 0x85000000;
 
 #[global_allocator]
 pub static ALLOCATOR: BumpAllocator = BumpAllocator::new(HEAP_START, HEAP_END);

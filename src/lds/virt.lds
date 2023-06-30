@@ -4,7 +4,7 @@ ENTRY(_start)
 MEMORY
 {
     UART (wr)  : ORIGIN = 0x10000000, LENGTH = 0x100
-    RAM  (wxa) : ORIGIN = 0x80000000, LENGTH = 128M
+    RAM  (wxa) : ORIGIN = 0x80000000, LENGTH = 1024M
 }
 
 PHDRS
@@ -46,8 +46,6 @@ SECTIONS
     
     PROVIDE(_ram_start = ORIGIN(RAM));
     PROVIDE(_ram_end = _ram_start + LENGTH(RAM));
-    PROVIDE(_stack_start = _ram_end - 0x01000000);
-    PROVIDE(_stack_end = _ram_end);
     PROVIDE(_heap_start = _bss_end);
-    PROVIDE(_heap_size = _stack_start - _heap_start);
+    PROVIDE(_stack_start = ALIGN(MIN(_ram_end, _ram_start + 0x08000000), 8));
 }
