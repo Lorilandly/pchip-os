@@ -1,18 +1,8 @@
 use crate::println;
+use crate::process::reg_frame;
+use crate::syscall;
 use riscv::register::mcause::Exception;
 use riscv::register::*;
-
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct reg_frame {
-    a: [usize; 8],
-    t: [usize; 7],
-    ra: usize,
-    sp: usize,
-    gp: usize,
-    tp: usize,
-    s: [usize; 12],
-}
 
 /// Handles CPU trap
 ///
@@ -28,18 +18,22 @@ pub struct reg_frame {
 /// # Panics
 /// Panics for all exceptions except for breakpoint.
 #[no_mangle]
-pub extern "C" fn trap_handle(frame: reg_frame) -> usize {
+pub extern "C" fn trap_handle(mut frame: reg_frame) -> usize {
     println!("{:x?}", frame);
+    let mut pc = mepc::read();
     match mcause::read().cause() {
         mcause::Trap::Exception(cause) => match cause {
             Exception::Breakpoint => println!("Breakpoint!\n{:#x?}", ExceptionFrame::new()),
-            Exception::MachineEnvCall => println!("Syscall!\n{:#x?}", ExceptionFrame::new()),
+            Exception::MachineEnvCall => {
+                println!("Syscall!\n{:#x?}", ExceptionFrame::new());
+                syscall::syscall_handle(&mut frame, &mut pc);
+            }
             _ => panic!("Exception: {:?}\n{:#x?}", cause, ExceptionFrame::new()),
         },
         mcause::Trap::Interrupt(cause) => println!("Interrput: {:?}", cause),
     }
 
-    mepc::read() + 4
+    pc + 4
 }
 
 #[derive(Debug)]

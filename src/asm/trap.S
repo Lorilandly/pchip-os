@@ -18,8 +18,7 @@ trap_entry:
   sd t5, 104(sp)
   sd t6, 112(sp)
   sd ra, 120(sp)
-  csrr t0, mscratch
-  sd t0, 128(sp)
+  sd sp, 128(sp)
   sd gp, 136(sp)
   sd tp, 144(sp)
   sd s0, 152(sp)
@@ -35,6 +34,7 @@ trap_entry:
   sd s10, 232(sp)
   sd s11, 240(sp)
   mv a0, sp
+  csrr a1, mscratch
   call trap_handle
   csrw mepc, a0
   ld a0, 0(sp)
@@ -53,5 +53,26 @@ trap_entry:
   ld t5, 104(sp)
   ld t6, 112(sp)
   ld ra, 120(sp)
+  ld sp, 128(sp)
+  ld gp, 136(sp)
+  ld tp, 144(sp)
+  ld s0, 152(sp)
+  ld s1, 160(sp)
+  ld s2, 168(sp)
+  ld s3, 176(sp)
+  ld s4, 184(sp)
+  ld s5, 192(sp)
+  ld s6, 200(sp)
+  ld s7, 208(sp)
+  ld s8, 216(sp)
+  ld s9, 224(sp)
+  ld s10, 232(sp)
+  ld s11, 240(sp)
   addi sp, sp, 248
   mret
+
+.global syscall
+syscall:
+  mv a7, a6
+  ecall
+  ret
