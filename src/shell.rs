@@ -23,7 +23,7 @@ use riscv::asm::ebreak;
 /// - Show file metadata (if exitst)
 /// - Execute file (if exitst)
 pub struct Shell {
-    file: Option<File>,
+    file: Option<Vec<u8>>,
 }
 
 impl Shell {
@@ -38,7 +38,7 @@ impl Shell {
             match input.as_str() {
                 "h" => self.help(),
                 "0" => unsafe { ebreak() },
-                "1" => 'a: {
+                "1" => {
                     println!("You can now start sending on Xmodem");
                     let modem = Xmodem::new();
                     // Because a mutex is passed in, Dead lock situation is possible if this function crashes or
@@ -48,7 +48,7 @@ impl Shell {
                         Ok(f) => f,
                         Err(e) => {
                             println!("\nAborted: {:?}", e);
-                            break 'a;
+                            continue;
                         }
                     };
                     let cksum = cksum(&file);
@@ -56,7 +56,7 @@ impl Shell {
                     let input = readln(&mut *SERIAL.lock());
                     match input.as_str() {
                         "" | "y" | "yes" | "Y" | "Yes" => {
-                            self.file = Some(File { file, cksum });
+                            self.file = Some(file);
                             println!("Ok");
                         }
                         _ => println!("Aborted"),
@@ -66,11 +66,10 @@ impl Shell {
                     Some(file) => {
                         let frame = reg_frame::new(0x9000_0000);
                         unsafe {
-                            let file_ptr = file.file.as_ptr();
                             ptr::copy_nonoverlapping(
-                                file_ptr,
+                                file.as_ptr(),
                                 0x9000_0000 as *mut u8,
-                                file.file.len(),
+                                file.len(),
                             );
                         }
                         // return return code
@@ -83,7 +82,7 @@ impl Shell {
                 },
                 "3" => match &self.file {
                     Some(file) => {
-                        for b in &file.file {
+                        for b in file {
                             print!("{}", *b as char);
                         }
                         println!();
@@ -92,7 +91,7 @@ impl Shell {
                 },
                 "4" => match &self.file {
                     Some(file) => {
-                        for (i, b) in file.file.iter().enumerate() {
+                        for (i, b) in file.iter().enumerate() {
                             if i & 0xf == 0 {
                                 print!("{:08x}:", i);
                             }
@@ -111,11 +110,10 @@ impl Shell {
                 "5" => {
                     if let Some(file) = &self.file {
                         unsafe {
-                            let file_ptr = file.file.as_ptr();
                             ptr::copy_nonoverlapping(
-                                file_ptr,
+                                file.as_ptr(),
                                 0x9000_0000 as *mut u8,
-                                file.file.len(),
+                                file.len(),
                             );
                         }
                     }
@@ -138,12 +136,6 @@ impl Shell {
             print!("\t2. Execute\n\t3. Show file in plain text\n\t4. Show file in hex\n\t5. Print value at memory address\n");
         }
     }
-}
-
-#[allow(unused)]
-struct File {
-    file: Vec<u8>,
-    cksum: u32,
 }
 
 fn cksum(file: &Vec<u8>) -> u32 {
