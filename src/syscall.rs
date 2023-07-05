@@ -1,5 +1,7 @@
-use crate::println;
-use crate::process::{reg_frame, KERNEL_PROCESS};
+use crate::{
+    println,
+    process::{reg_frame, Process, KERNEL_PROCESS},
+};
 
 extern "C" {
     /// System call
@@ -17,40 +19,51 @@ extern "C" {
 }
 
 /// Syscall to exit from a program
-pub fn syscall0() {
-    unsafe { syscall(0, 0, 0, 0, 0, 0, 0) };
+pub fn syscall0(code: usize) {
+    unsafe { syscall(code, 0, 0, 0, 0, 0, 0) };
 }
 
 /// Syscall to run a program
 // TODO: change this function to accept `Process`
-pub fn syscall1(frame: reg_frame, pc: *const usize) {
+pub fn syscall1(frame: reg_frame, pc: *const usize) -> Result<(), usize> {
     let frame = &frame as *const reg_frame as usize;
     let pc = pc as usize;
+    let code;
     unsafe {
-        syscall(frame, pc, 0, 0, 0, 0, 1);
+        code = syscall(frame, pc, 0, 0, 0, 0, 1);
+    }
+    match code {
+        0 => Ok(()),
+        n => Err(n),
     }
 }
 
 pub fn syscall_handle(frame: &mut reg_frame, pc: &mut usize) {
-    println!("Handling Syscall!!");
     match frame.a[7] {
-        // no arg
+        // arg 0: exit status
         0 => unsafe {
-            println!("Syscall 0");
-            //GUEST_PROCESS.frame = *frame;
-            //GUEST_PROCESS.pc = *pc;
-            *frame = KERNEL_PROCESS.frame;
-            *pc = KERNEL_PROCESS.pc;
+            if let Some(kprocess) = &KERNEL_PROCESS {
+                // load kernel frame with return value at a0
+                let code = frame.a[0];
+                *pc = kprocess.pc + 4;
+                *frame = kprocess.frame;
+                frame.a[0] = code;
+                KERNEL_PROCESS = None;
+            }
         },
         // arg 0: reg_frame
         // arg 1: pc
         1 => unsafe {
-            println!("Syscall 1");
-            KERNEL_PROCESS.frame = *frame;
-            KERNEL_PROCESS.pc = *pc;
-            // new reg frame with correct sp
-            *pc = frame.a[1];
-            *frame = *(frame.a[0] as *const reg_frame);
+            if let None = KERNEL_PROCESS {
+                // save kernel frame
+                KERNEL_PROCESS = Some(Process {
+                    frame: *frame,
+                    pc: *pc,
+                });
+                // switch to new reg frame
+                *pc = frame.a[1];
+                *frame = *(frame.a[0] as *const reg_frame);
+            }
         },
         _ => println!("Unknown Syscall number"),
     }

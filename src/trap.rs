@@ -1,6 +1,8 @@
-use crate::println;
-use crate::process::reg_frame;
-use crate::syscall;
+use crate::{
+    println,
+    process::{reg_frame, KERNEL_PROCESS},
+    syscall,
+};
 use riscv::register::mcause::Exception;
 use riscv::register::*;
 
@@ -23,17 +25,37 @@ pub extern "C" fn trap_handle(mut frame: reg_frame) -> usize {
     let mut pc = mepc::read();
     match mcause::read().cause() {
         mcause::Trap::Exception(cause) => match cause {
-            Exception::Breakpoint => println!("Breakpoint!\n{:#x?}", ExceptionFrame::new()),
+            Exception::Breakpoint => {
+                println!("Breakpoint!\n{:#x?}", ExceptionFrame::new());
+                pc += 4;
+            }
+            // M-mode syscall
             Exception::MachineEnvCall => {
-                println!("Syscall!\n{:#x?}", ExceptionFrame::new());
+                println!("Syscall-{}!", frame.a[7]);
                 syscall::syscall_handle(&mut frame, &mut pc);
             }
-            _ => panic!("Exception: {:?}\n{:#x?}", cause, ExceptionFrame::new()),
+            // if executing frame is guest, switch to kernel and return reason
+            _ => {
+                let eframe = ExceptionFrame::new();
+                unsafe {
+                    match &mut KERNEL_PROCESS {
+                        // The guest process is running
+                        //   Error code is pushed to host a[0]
+                        //   Error frame is pushed to host a[1]
+                        Some(ref mut kprocess) => {
+                            println!("You are seeing this message because an CPU exception ({:?}) is encountered and not handled.\n{:#x?}", cause, eframe);
+                            kprocess.frame.a[1] = &eframe as *const ExceptionFrame as usize;
+                            syscall::syscall0(cause as usize);
+                        }
+                        // The kernel process is running
+                        None => panic!("Exception: {:?}\n{:#x?}", cause, eframe),
+                    }
+                }
+            }
         },
         mcause::Trap::Interrupt(cause) => println!("Interrput: {:?}", cause),
     }
-
-    pc + 4
+    pc
 }
 
 #[derive(Debug)]

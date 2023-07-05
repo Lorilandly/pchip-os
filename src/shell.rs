@@ -1,11 +1,13 @@
-use crate::xmodem::Xmodem;
 use crate::{
     print, println,
+    process::reg_frame,
+    syscall::syscall1,
     uart::{self, SERIAL},
+    xmodem::Xmodem,
 };
 use alloc::string::String;
 use alloc::vec::Vec;
-use core::fmt;
+use core::{fmt, ptr};
 use crc::{Crc, CRC_32_CKSUM};
 use riscv::asm::ebreak;
 
@@ -62,12 +64,66 @@ impl Shell {
                 }
                 "2" => match &self.file {
                     Some(file) => {
-                        for b in &file.file {
-                            print!("{}", *b as char);
+                        let frame = reg_frame::new(0x9000_0000);
+                        unsafe {
+                            let file_ptr = file.file.as_ptr();
+                            ptr::copy_nonoverlapping(
+                                file_ptr,
+                                0x9000_0000 as *mut u8,
+                                file.file.len(),
+                            );
+                        }
+                        // return return code
+                        // print return code or explain
+                        if let Err(e) = syscall1(frame, 0x9000_0000 as *const usize) {
+                            println!("Err code: {}", e);
                         }
                     }
                     None => println!("Unrecognized Command"),
                 },
+                "3" => match &self.file {
+                    Some(file) => {
+                        for b in &file.file {
+                            print!("{}", *b as char);
+                        }
+                        println!();
+                    }
+                    None => println!("Unrecognized Command"),
+                },
+                "4" => match &self.file {
+                    Some(file) => {
+                        for (i, b) in file.file.iter().enumerate() {
+                            if i & 0xf == 0 {
+                                print!("{:08x}:", i);
+                            }
+                            if i & 1 == 0 {
+                                print!(" ");
+                            }
+                            print!("{:02x}", *b);
+                            if i & 0xf == 0xf {
+                                println!();
+                            }
+                        }
+                        println!();
+                    }
+                    None => println!("Unrecognized Command"),
+                },
+                "5" => {
+                    if let Some(file) = &self.file {
+                        unsafe {
+                            let file_ptr = file.file.as_ptr();
+                            ptr::copy_nonoverlapping(
+                                file_ptr,
+                                0x9000_0000 as *mut u8,
+                                file.file.len(),
+                            );
+                        }
+                    }
+                    println!("Type address in hex");
+                    let a: usize = usize::from_str_radix(&readln(&mut *SERIAL.lock()), 16).unwrap();
+                    let a = a as *const i32;
+                    unsafe { println!("{:08x}", *a) };
+                }
                 _ => println!("Unrecognized Command!"),
             }
         }
@@ -79,7 +135,7 @@ impl Shell {
             self.file.is_some(), // include a checksum and a size
         );
         if let Some(_) = self.file {
-            print!("\t2. Show file in plain text\n\t3. file metadata\n\t4. Execute\n");
+            print!("\t2. Execute\n\t3. Show file in plain text\n\t4. Show file in hex\n\t5. Print value at memory address\n");
         }
     }
 }
