@@ -1,6 +1,6 @@
 use crate::{
     println,
-    process::{reg_frame, Process, KERNEL_PROCESS},
+    process::{Process, RegFrame, KERNEL_PROCESS},
 };
 
 extern "C" {
@@ -24,9 +24,8 @@ pub fn syscall0(code: usize) {
 }
 
 /// Syscall to run a program
-// TODO: change this function to accept `Process`
-pub fn syscall1(frame: reg_frame, pc: *const usize) -> Result<(), usize> {
-    let frame = &frame as *const reg_frame as usize;
+pub fn syscall1(frame: RegFrame, pc: *const usize) -> Result<(), usize> {
+    let frame = &frame as *const RegFrame as usize;
     let pc = pc as usize;
     let code;
     unsafe {
@@ -38,7 +37,7 @@ pub fn syscall1(frame: reg_frame, pc: *const usize) -> Result<(), usize> {
     }
 }
 
-pub fn syscall_handle(frame: &mut reg_frame, pc: &mut usize) {
+pub fn syscall_handle(frame: &mut RegFrame, pc: &mut usize) {
     match frame.a[7] {
         // arg 0: exit status
         0 => unsafe {
@@ -62,7 +61,7 @@ pub fn syscall_handle(frame: &mut reg_frame, pc: &mut usize) {
                 });
                 // switch to new reg frame
                 *pc = frame.a[1];
-                *frame = *(frame.a[0] as *const reg_frame);
+                *frame = *(frame.a[0] as *const RegFrame);
             }
         },
         _ => println!("Unknown Syscall number"),

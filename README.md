@@ -1,8 +1,11 @@
 # PCHIP OS
 An Operating system built for the Pchip.
 
-## Building
-### Running on qemu
+## Prerequisit
+Install the rust programming language from the [official website](https://www.rust-lang.org/tools/install)
+
+## Running
+### On qemu
 ```bash
 cargo run
 ```
@@ -10,7 +13,7 @@ This will launch a serial port on your machine, and you will need to use a seria
 
 If you wish to try the OS directly on your terminal, edit `.cargo/config.toml`: change `pty` to `stdio` on line 7.
 
-### Running on Pchip
+### On Pchip
 The OS will run on the Pchip, but be aware that due to the various bug on the Pchip, the OS will not run correctly as of now.
 
 #### Option 1: Run the OS from BRAM
@@ -79,12 +82,17 @@ Compile the program with:
 
 C example:
 
-1. Add a system call at the end of the program. The system call will exit from the program and return control to the OS. 
+1. Write your program.
+2. Add a system call at the end of the program. The system call will exit from the program and return control to the OS. 
     Code for the system call:
     ```c
     asm volatile ("li a0, 0; ecall;");
     ```
-2. Compile the program with base address of `0x90000000` and convert to binary. 
+    If you want to add a breakpoint in your program, insert this line 
+    ```c
+    asm volatile ("ebreak;");
+    ```
+3. Compile the program with base address of `0x90000000` and convert to binary. 
 
     Example Makefile:
     ```makefile

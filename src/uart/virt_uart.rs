@@ -3,7 +3,7 @@ use core::fmt;
 use ns16550a::*;
 use spin::{Lazy, Mutex};
 
-/// Global serial port
+/// Serial port for QEMU Virt target
 ///
 /// `Write` trait will never panic
 pub static SERIAL: Lazy<Mutex<Uart>> = Lazy::new(|| {

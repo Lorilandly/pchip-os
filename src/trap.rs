@@ -1,6 +1,6 @@
 use crate::{
     println,
-    process::{reg_frame, KERNEL_PROCESS},
+    process::{RegFrame, KERNEL_PROCESS},
     syscall,
 };
 use riscv::register::mcause::Exception;
@@ -20,7 +20,7 @@ use riscv::register::*;
 /// # Panics
 /// Panics for all exceptions except for breakpoint.
 #[no_mangle]
-pub extern "C" fn trap_handle(mut frame: reg_frame) -> usize {
+pub extern "C" fn trap_handle(mut frame: RegFrame) -> usize {
     println!("{:x?}", frame);
     let mut pc = mepc::read();
     match mcause::read().cause() {

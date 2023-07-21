@@ -26,10 +26,6 @@ pub struct Xmodem {
     ///
     /// This only applies to the initial packet
     pub max_initial_errors: u32,
-
-    /// The byte used to pad the last block. XMODEM can only send blocks of a certain size,
-    /// so if the message is not a multiple of that size the last block needs to be padded.
-    pub pad_byte: u8,
 }
 
 impl Xmodem {
@@ -38,25 +34,8 @@ impl Xmodem {
         Xmodem {
             max_errors: 16,
             max_initial_errors: 16,
-            pad_byte: 0x1a,
         }
     }
-
-    // TODO:
-    // Subroutines
-    // The character-receive subroutine:
-    //      called with a parameter
-    //      specifying the number of seconds to wait. The receiver should first
-    //      call it with a time of 10, then <nak> and try again, 10 times.
-    //
-    // 1st bit subroutine:
-    //
-    // packet receive subroutine:
-    //      Arg: packet size
-    //      Ret: packet
-    //
-    // "PURGE" subroutine:
-    //      before calling <nak>
 
     /// Receive an XMODEM transmission.
     ///
@@ -190,7 +169,7 @@ impl Xmodem {
 pub enum Error {
     Fmt(fmt::Error),
 
-    ///
+    /// The xmodem sender did not response in a timely manner
     Timeout,
 
     /// The number of communications errors exceeded `max_errors` in a single

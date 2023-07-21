@@ -1,6 +1,6 @@
 use crate::{
     print, println,
-    process::reg_frame,
+    process::RegFrame,
     syscall::syscall1,
     uart::{self, SERIAL},
     xmodem::Xmodem,
@@ -64,7 +64,7 @@ impl Shell {
                 }
                 "2" => match &self.file {
                     Some(file) => {
-                        let frame = reg_frame::new(0x9000_0000);
+                        let frame = RegFrame::new(0x9000_0000);
                         unsafe {
                             ptr::copy_nonoverlapping(
                                 file.as_ptr(),

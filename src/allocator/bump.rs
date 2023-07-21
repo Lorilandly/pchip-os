@@ -3,6 +3,11 @@ use core::sync::atomic::{AtomicUsize, Ordering};
 
 use alloc::alloc::{GlobalAlloc, Layout};
 
+/// Heap allocator that allocates memory linearly.
+///
+/// To deallocate all the objects in the arena at once, simply
+/// reset the bump pointer back to the start of the arena’s memory chunk.
+#[derive(Debug)]
 pub struct BumpAllocator {
     heap_start: usize,
     heap_end: usize,
@@ -36,6 +41,7 @@ unsafe impl GlobalAlloc for BumpAllocator {
             .next
             .fetch_update(Ordering::SeqCst, Ordering::SeqCst, |mut next| {
                 // Align up
+                // - This is a hack to align memory
                 inext = (next + align - 1) & align_mask;
                 if size + inext > self.heap_end {
                     return None;

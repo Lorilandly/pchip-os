@@ -2,6 +2,12 @@ use super::Read;
 use core::fmt;
 use spin::{Lazy, Mutex};
 
+// A mutex is used here to guard shared resource.
+// WARNING: The programmer has to make sure that the cpu do not enter interrupt when the mutex is unlocked,
+//          as this will cause a deadlock.
+// TODO: Switch to unsafe later to get rid of the mutex. This will allow CPU to interrput even when using UART.
+
+/// USB UART port on VC707 FPGA
 pub static SERIAL: Lazy<Mutex<Uart>> = Lazy::new(|| Mutex::new(Uart::new(0x4060_0000)));
 
 pub struct Uart {

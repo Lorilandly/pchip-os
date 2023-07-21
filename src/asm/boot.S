@@ -22,6 +22,7 @@ _start:
 
 
   // Load data section
+  // This is not needed if data section is already on RAM
   la t0, _data_lma
   la t1, _data_start
   beq t0, t1, 2f

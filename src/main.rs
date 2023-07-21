@@ -24,6 +24,7 @@ pub extern "C" fn main() -> ! {
     let mut shell = Shell::new();
     shell.shell();
 
+    // Put CPU into idle.
     loop {
         unsafe { wfi() };
     }
