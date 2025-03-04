@@ -3,7 +3,10 @@ use crate::{
     process::{RegFrame, KERNEL_PROCESS},
     syscall,
 };
-use riscv::register::mcause::Exception;
+use riscv::interrupt::{
+    machine::{Exception, Interrupt},
+    Trap,
+};
 use riscv::register::*;
 
 /// Handles CPU trap
@@ -23,8 +26,12 @@ use riscv::register::*;
 pub extern "C" fn trap_handle(mut frame: RegFrame) -> usize {
     println!("{:x?}", frame);
     let mut pc = mepc::read();
-    match mcause::read().cause() {
-        mcause::Trap::Exception(cause) => match cause {
+    match mcause::read()
+        .cause()
+        .try_into::<Interrupt, Exception>()
+        .unwrap()
+    {
+        Trap::Exception(cause) => match cause {
             Exception::Breakpoint => {
                 println!("Breakpoint!\n{:#x?}", ExceptionFrame::new());
                 pc += 4;
@@ -53,7 +60,7 @@ pub extern "C" fn trap_handle(mut frame: RegFrame) -> usize {
                 }
             }
         },
-        mcause::Trap::Interrupt(cause) => println!("Interrput: {:?}", cause),
+        Trap::Interrupt(cause) => println!("Interrput: {:?}", cause),
     }
     pc
 }

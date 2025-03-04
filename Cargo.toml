@@ -13,7 +13,7 @@ panic = "abort" # disable stack unwinding on panic
 panic = "abort" # disable stack unwinding on panic
 
 [dependencies]
-riscv = "0.10"
+riscv = "0.13"
 ns16550a = "0.2"
 spin = "0.9"
 crc = "3.0"

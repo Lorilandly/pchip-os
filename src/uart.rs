@@ -13,7 +13,7 @@ pub trait Read {
             match self.get() {
                 //Some(CAN) => return Err(Error::Canceled),
                 Some(c) => return Ok(c),
-                None => unsafe { delay(1000) },
+                None => delay(1000),
             }
         }
         Err(Error::Timeout)
