@@ -6,8 +6,8 @@ use self::bump::BumpAllocator;
 // Linker symbol is imported as `extern static` in rust, but `const` is necessary to use it in global variable.
 // Const version of the variable is defined manually as a temporary workaround.
 extern "C" {
-    static _heap_start: usize;
-    static _heap_size: usize;
+    static _heap_base: usize;
+    static _heap_limit: usize;
 }
 
 // Change here to move location of the heap

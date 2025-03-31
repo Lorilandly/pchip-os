@@ -26,6 +26,11 @@ pub struct Shell {
     file: Option<Vec<u8>>,
 }
 
+pub fn user_mod() {
+    let mut shell = Shell::new();
+    shell.shell();
+}
+
 impl Shell {
     pub fn new() -> Self {
         Self { file: None }

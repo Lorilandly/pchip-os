@@ -1,6 +1,10 @@
 OUTPUT_ARCH("riscv")
 ENTRY(_start)
 
+Heap_Size = 8*1024;           /* fixed-size, 8kB heap for _sbrk use */
+Stack_Size = 2*1024;          /* fixed-size, 2kB main/process stacks */
+Thread_Stacks_Size = 32*1024; /* fixed-size, 32kB space for thread main/process stacks */
+
 MEMORY
 {
     UART (rw) : ORIGIN = 0x40600000, LENGTH = 0x10000
@@ -61,8 +65,36 @@ SECTIONS
         PROVIDE(_bss_end = .);
     } >RAM AT>RAM :bss
 
-    PROVIDE(_ram_start = ORIGIN(RAM));
-    PROVIDE(_ram_end = _ram_start + LENGTH(RAM));
-    PROVIDE(_heap_start = _bss_end);
-    PROVIDE(_stack_start = ALIGN(MIN(_ram_end, _ram_start + 0x08000000), 8));
+    /* create boundary labels for 8kB heap, 2kB main stack, 2kB process stack,
+     * 32 1kB thread kernel stacks, and 32 1kB thread user stacks */
+    .misc : {
+        . = ALIGN(8*1024);
+        
+        /* 8kB heap for alloc */
+        _heap_base = .;
+        . = . + Heap_Size;
+        _heap_limit = .;
+        
+        /* 2kB main thread stack */
+        _u_stack_limit = .;
+        . = . + Stack_Size;
+        _u_stack_base = .;
+    
+        /* 2kB kernel stack */
+        _m_stack_limit = .;
+        . = . + Stack_Size;
+        _m_stack_base = .;
+
+        . = ALIGN(32*1024);  
+
+        /* 32kB to hold all thread user stacks */
+        _thread_u_stacks_limit = .;
+        . = . + Thread_Stacks_Size;
+        _thread_u_stacks_base = .;
+
+        /* 32kB to hold all thread kernel stacks */
+        _thread_k_stacks_limit = .;
+        . = . + Thread_Stacks_Size;
+        _thread_k_stacks_base = .;
+    } > RAM
 }

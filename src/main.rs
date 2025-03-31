@@ -12,21 +12,35 @@ mod trap;
 pub mod uart;
 pub mod xmodem;
 
+use core::arch::asm;
 use core::panic::PanicInfo;
 use riscv::asm::wfi;
-use shell::Shell;
+use riscv::register::*;
+use shell::user_mod;
 
 /// Entry point
 #[no_mangle] // don't mangle the name of this function
 pub extern "C" fn main() -> ! {
     println!("Hello world!");
 
-    let mut shell = Shell::new();
-    shell.shell();
+    unsafe {
+        // configure PMP CSR
+        pmpcfg0::set_pmp(0, Range::NAPOT, Permission::RWX, false);
+        pmpaddr0::write(0x80FF_FFFF >> 2);
+        pmpcfg0::set_pmp(1, Range::NAPOT, Permission::RWX, false);
+        pmpaddr1::write(0x1000_00FF >> 2);
+        // set target jump addr
+        mepc::write(user_mod as usize);
+        // set target jump mode
+        mstatus::set_mpp(mstatus::MPP::User);
+        // set stack
+        asm!("la sp, _u_stack_base");
+        asm!("mret");
+    }
 
     // Put CPU into idle.
     loop {
-        unsafe { wfi() };
+        wfi();
     }
 }
 
@@ -35,6 +49,6 @@ pub extern "C" fn main() -> ! {
 fn panic(info: &PanicInfo) -> ! {
     println!("{}", info);
     loop {
-        unsafe { wfi() };
+        wfi();
     }
 }

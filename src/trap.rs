@@ -73,6 +73,7 @@ struct ExceptionFrame {
     mtval: usize,
     mie: bool,
     mip: bool,
+    mpp: mstatus::MPP,
 }
 
 impl ExceptionFrame {
@@ -83,12 +84,14 @@ impl ExceptionFrame {
         let mstatus = mstatus::read();
         let mie = mstatus.mie();
         let mip = mstatus.mpie();
+        let mpp = mstatus.mpp();
         Self {
             mhartid,
             mepc,
             mtval,
             mie,
             mip,
+            mpp,
         }
     }
 }
